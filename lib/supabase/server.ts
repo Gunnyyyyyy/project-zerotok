@@ -26,3 +26,23 @@ export async function createClient() {
     },
   })
 }
+
+/**
+ * Get user from middleware headers to avoid duplicate auth calls
+ */
+export async function getUserFromHeaders() {
+  const { headers } = await import('next/headers')
+  const headersList = await headers()
+  
+  const userId = headersList.get('x-user-id')
+  const userEmail = headersList.get('x-user-email')
+  
+  if (!userId || !userEmail) {
+    return null
+  }
+  
+  return {
+    id: userId,
+    email: userEmail,
+  }
+}

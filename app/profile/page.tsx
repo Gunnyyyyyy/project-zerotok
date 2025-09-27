@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUserFromHeaders } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -8,16 +8,14 @@ import { LogoutButton } from "@/components/logout-button"
 import { CopyCodeButton } from "@/components/copy-code-button"
 
 export default async function ProfilePage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
+  // Get user from middleware headers to avoid duplicate auth calls
+  const user = await getUserFromHeaders()
+  
+  if (!user) {
     redirect("/auth/login")
   }
+
+  const supabase = await createClient()
 
   // Get user profile with user code
   let profile = null

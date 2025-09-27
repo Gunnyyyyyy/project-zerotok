@@ -30,39 +30,15 @@ interface FriendsListProps {
   friends?: Friendship[]
   requests?: FriendRequest[]
   type: "friends" | "pending"
-  onUpdate?: () => void
 }
 
-export function FriendsList({ friends: initialFriends, requests: initialRequests, type, onUpdate }: FriendsListProps) {
+export function FriendsList({ friends: initialFriends, requests: initialRequests, type }: FriendsListProps) {
   const [loading, setLoading] = useState<string | null>(null)
   const [friends, setFriends] = useState(initialFriends || [])
   const [requests, setRequests] = useState(initialRequests || [])
 
-  useEffect(() => {
-    const supabase = createClient()
-
-    const channel = supabase
-      .channel("friendships-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "friendships",
-        },
-        (payload) => {
-          console.log("[v0] Friendship change:", payload)
-          if (onUpdate) {
-            onUpdate()
-          }
-        },
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [onUpdate])
+  // Remove real-time subscription to prevent duplicate API calls
+  // The parent component will handle data updates
 
   // Update local state when props change
   useEffect(() => {
@@ -91,9 +67,8 @@ export function FriendsList({ friends: initialFriends, requests: initialRequests
 
       setRequests((prev) => prev.filter((req) => req.id !== requestId))
 
-      if (onUpdate) {
-        onUpdate()
-      }
+      // Don't trigger parent reload to avoid duplicate API calls
+      // The UI will update locally
     } catch (error) {
       console.error("Error accepting request:", error)
       alert("친구 요청 수락에 실패했습니다. 다시 시도해주세요.")
@@ -120,9 +95,8 @@ export function FriendsList({ friends: initialFriends, requests: initialRequests
 
       setRequests((prev) => prev.filter((req) => req.id !== requestId))
 
-      if (onUpdate) {
-        onUpdate()
-      }
+      // Don't trigger parent reload to avoid duplicate API calls
+      // The UI will update locally
     } catch (error) {
       console.error("Error rejecting request:", error)
       alert("친구 요청 거절에 실패했습니다. 다시 시도해주세요.")

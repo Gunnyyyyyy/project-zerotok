@@ -37,6 +37,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Add user info to headers for pages to use
+  if (user) {
+    supabaseResponse.headers.set('x-user-id', user.id)
+    supabaseResponse.headers.set('x-user-email', user.email || '')
+  }
+
   if (
     request.nextUrl.pathname !== "/" &&
     !user &&

@@ -40,16 +40,22 @@ export default function CreateGroupPage() {
     } = await supabase.auth.getUser()
     if (!user) return
 
+    // Use a more specific query to avoid conflicts with other pages
     const { data: friendships } = await supabase
       .from("friendships")
       .select(`
-        friend:users!friendships_friend_id_fkey(id, display_name, user_code)
+        id,
+        friend:friend_id (
+          id, 
+          display_name, 
+          user_code
+        )
       `)
       .eq("user_id", user.id)
       .eq("status", "accepted")
 
     if (friendships) {
-      setFriends(friendships.map((f) => f.friend).filter(Boolean))
+      setFriends(friendships.map((f) => f.friend).filter(Boolean) as any)
     }
   }
 

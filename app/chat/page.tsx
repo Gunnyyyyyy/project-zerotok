@@ -1,21 +1,19 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUserFromHeaders } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { User, MessageCircle, Users, MessageSquare } from "lucide-react"
 import { ConversationsList } from "@/components/conversations-list"
 
 export default async function ChatPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
+  // Get user from middleware headers to avoid duplicate auth calls
+  const user = await getUserFromHeaders()
+  
+  if (!user) {
     redirect("/auth/login")
   }
+
+  const supabase = await createClient()
 
   // Get conversations (friends with recent messages)
   const { data: conversations, error: conversationsError } = await supabase
@@ -44,7 +42,7 @@ export default async function ChatPage() {
         .from("messages")
         .select("content, created_at, sender_id")
         .or(
-          `and(sender_id.eq.${user.id},receiver_id.eq.${conversation.friend?.id}),and(sender_id.eq.${conversation.friend?.id},receiver_id.eq.${user.id})`,
+          `and(sender_id.eq.${user.id},receiver_id.eq.${(conversation.friend as any)?.id}),and(sender_id.eq.${(conversation.friend as any)?.id},receiver_id.eq.${user.id})`,
         )
         .order("created_at", { ascending: false })
         .limit(1)
@@ -54,13 +52,14 @@ export default async function ChatPage() {
       const { count: unreadCount } = await supabase
         .from("messages")
         .select("*", { count: "exact", head: true })
-        .eq("sender_id", conversation.friend?.id)
+        .eq("sender_id", (conversation.friend as any)?.id)
         .eq("receiver_id", user.id)
         .eq("is_read", false)
 
       return {
         ...conversation,
-        lastMessage,
+        friend: conversation.friend as any,
+        lastMessage: lastMessage || undefined,
         unreadCount: unreadCount || 0,
       }
     }),

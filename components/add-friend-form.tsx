@@ -8,11 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 
-interface AddFriendFormProps {
-  onFriendAdded?: () => void
-}
 
-export function AddFriendForm({ onFriendAdded }: AddFriendFormProps) {
+export function AddFriendForm() {
   const [friendCode, setFriendCode] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -86,9 +83,8 @@ export function AddFriendForm({ onFriendAdded }: AddFriendFormProps) {
       setSuccess(`${friendUser.display_name}님에게 친구 요청을 보냈습니다!`)
       setFriendCode("")
 
-      if (onFriendAdded) {
-        onFriendAdded()
-      }
+      // Don't trigger parent reload to avoid duplicate API calls
+      // The real-time subscription or manual refresh will handle updates
 
       // Clear success message after 3 seconds
       setTimeout(() => {

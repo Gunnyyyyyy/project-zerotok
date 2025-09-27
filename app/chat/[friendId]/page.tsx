@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUserFromHeaders } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -12,16 +12,15 @@ interface ChatPageProps {
 
 export default async function ChatPage({ params }: ChatPageProps) {
   const { friendId } = await params
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
+  
+  // Get user from middleware headers to avoid duplicate auth calls
+  const user = await getUserFromHeaders()
+  
+  if (!user) {
     redirect("/auth/login")
   }
+
+  const supabase = await createClient()
 
   // Verify friendship exists
   const { data: friendship, error: friendshipError } = await supabase
@@ -92,8 +91,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
             </Link>
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-medium text-foreground">{friendInfo?.display_name}</h1>
-            <p className="text-sm text-muted-foreground font-mono">{friendInfo?.user_code}</p>
+            <h1 className="text-lg font-medium text-foreground">{(friendInfo as any)?.display_name}</h1>
+            <p className="text-sm text-muted-foreground font-mono">{(friendInfo as any)?.user_code}</p>
           </div>
         </div>
       </div>
